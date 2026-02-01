@@ -31,9 +31,9 @@ fi
 # connectivity check
 status_code=$(curl -m 6 -A " WPSD-HostFileUpdater ConnCheck ${uaStr}" --write-out %{http_code} --silent --output /dev/null ${hostFileURL})
 if [[ $status_code == 20* ]] || [[ $status_code == 30* ]] ; then
-    echo "WPSD Hostfile Update Server connection OK...updating hostfiles."
+    echo "ODS aktualizacni server - pripojeni OK...."
 else
-    echo "WPSD Hostfile Update Server connection failed."
+    echo "ODS aktualizacni server - NEPRIPOJENO "
     exit 1
 fi
 
@@ -321,9 +321,9 @@ ln -s ${RADIOIDDB} ${STRIPPED}
 touch /var/run/hostfiles-up # create/reset marker
 
 if [ -t 1 ] ; then
-    echo -e "DONE."
+    echo -e "USPESNE"
 else
-    echo -e "* DONE *"
+    echo -e "* USPESNE *"
 fi
 
 # legacy cleanups
