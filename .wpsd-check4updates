@@ -1,11 +1,55 @@
 #!/bin/bash
 
-gitFolder="/var/www/dashboard"
-gitRemoteVer=/etc/.WPSD_remote_version
-# W0CHP has more than one branch. So depending on what W0CHP branch the user has installed, check that branch.
-gitBranch="$( git --git-dir=${gitFolder}/.git symbolic-ref --short HEAD )"
-gitStatusRemote=$( cat ${gitRemoteVer} )
-gitStatusLocal=$( git --work-tree=${gitFolder} --git-dir=${gitFolder}/.git rev-parse --short=10 ${gitBranch} )
+source /usr/local/sbin/.wpsd-common-funcs
+
+# Local cache for the remote version file
+gitRemoteVerCache="/etc/.WPSD_remote_version"
+
+# Function to get the remote version for a repo key
+get_remote_version() {
+    local repo_key="$1"
+    grep "^${repo_key}=" "$gitRemoteVerCache" | cut -d'=' -f2
+}
+
+# Function to get the local version for a repository
+get_local_version() {
+    local gitFolder="$1"
+    local gitBranch
+    gitBranch=$(git --git-dir="${gitFolder}/.git" symbolic-ref --short HEAD)
+    git --work-tree="$gitFolder" --git-dir="${gitFolder}/.git" rev-parse --short=10 "$gitBranch"
+}
+
+# Function to check for an update
+check_update() {
+    local repo_key="$1"
+    local gitFolder="$2"
+    local remote_version
+    local local_version
+    remote_version=$(get_remote_version "$repo_key")
+    local_version=$(get_local_version "$gitFolder")
+
+    if [ "$remote_version" != "$local_version" ]; then
+        echo "1"
+    else
+        echo "0"
+    fi
+}
+
+# Define repositories
+declare -A repos
+repos=( ["WPSD-Scripts"]="/usr/local/sbin" ["WPSD-Binaries"]="/usr/local/bin" ["WPSD-WebCode"]="/var/www/dashboard" )
+
+# Check if the system is a DVmega-Cast device
+castResult=$(isDVmegaCast)
+if [[ $castResult == "true" ]]; then
+    repos["DVMega-Cast"]="/opt/cast"
+fi
+
+# Validate the presence of the remote version file
+if [[ ! -s "$gitRemoteVerCache" ]]; then
+    exit 1
+fi
+
 
 # ODS.DMRCZ UPDATE BLIKAJICI
 REPO_URL="https://github.com/dmrcz/ods.dmrcz-dash-2026-v2.git"
